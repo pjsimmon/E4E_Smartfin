@@ -119,7 +119,7 @@ else:
 
   wave_pi = 0 #time of wave period
 
-  threshold = 0 #not sure yet what to initalize threshold to
+  threshold = 20 #not sure yet what to initalize threshold to
 
   end = len(acc_list)
 
@@ -135,7 +135,6 @@ else:
       and a_this > a_next1 + threshold and a_this > a_next2 + threshold):
 
       max_wi = i
-      wave_pi = time_list[i+1] + wave_pi    
  
       #Do calculations until a new min is found 
       while (minNotFound and i < (end - 2)):
@@ -143,6 +142,8 @@ else:
         v_new = (a_new*t_out) + v0
         d_new = (0.5*a_new*(t_out**2)) + v_new*t_out + d0 
     
+        wave_pi = time_list[i+1] + wave_pi    
+ 
         print "Looking for a min" 
         print a_prev2
         print a_prev1
@@ -202,7 +203,8 @@ else:
 
   print "\n" 
   print "Algorithm Successful."
+  print "Using a threshold of %d:" % threshold 
   print "The total number of waves for this session was: %d." % numWaves
-  print "Calculated Average Wave Height as: %f *units*." % avg_WH 
+  print "Calculated Average Wave Height as: %f (units?)." % avg_WH 
   print "Calculated Average Wave Frequency as: %f Hz." % avg_WF
 
