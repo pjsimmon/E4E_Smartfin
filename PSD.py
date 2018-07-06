@@ -14,6 +14,11 @@
 import numpy as np
 from scipy import signal
 import matplotlib.pyplot as plt
+
+#from plotly import tools
+#import plotly.offline
+#import plotly.graph_objs as go
+
 import math
 import re
 
@@ -31,7 +36,7 @@ write_file = open("WaveStatsOut.txt", "w")
 #Initialize lists
 t1 = 0 
 t2 = 0
-time_list = []  #list of times; t_out = current_time - prev_time 
+time_list = []  #list of ***elapsed*** times
 acc_list = []   #list of estimated accelerations
 
 print 'Extracting data from file...'
@@ -61,8 +66,11 @@ with open(filename_r, 'r') as f:
         #t_out is the time offset between two subsequent samples
         if (t_out < 0): 
           t_out = t_out + 1
-      
-        time_list.append(t_out)
+     
+        last = len(time_list) - 1
+        last_time = time_list[last] 
+        new_time = t_out + last_time
+        time_list.append(new_time)
 
       if (str_array[2] != "N/A" and str_array[3] != "N/A" and \
         str_array[4] != "N/A" and str_array[2] != "IMU A1"):
@@ -96,6 +104,9 @@ with open(filename_r, 'r') as f:
 time_array = np.array(time_list)
 acc_array = np.array(acc_list)
 
+#plt.plot(time_array, acc_array)
+#plt.show()
+
 #Need to remove the scaling factor of 500 to get more correct units for 
 #Energy in m^2/Hz.
 
@@ -113,5 +124,13 @@ plt.show()
 
 
 
+#trace1 = go.Scatter(x=time_array, y=acc_array)
+#trace2 = go.Scatter(x=f, y=Pxx_den)
+
+#fig = tools.make_subplots(rows=2, cols=1)
+#fig.append_trace(trace1, 2, 1)
+#fig.append_trace(trace2, 1, 1)
+#fig['layout'].update(height=600, width=600, title='Stacked subplots')
+#plotly.offline.plot(fig, filename='stacked-subplots')
 
 
