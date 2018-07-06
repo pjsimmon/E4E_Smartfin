@@ -77,13 +77,13 @@ with open(filename_r, 'r') as f:
         ay = int(str_array[3])  #y-axis, affected by gravity (vertical)
         az = int(str_array[4])  #z-axis (horizontal direction 2)
 
-        g = 500            #g is the constant for gravity: 500 (measured in g?)
+        g_const = 500            #g is the constant for gravity: 500 (measured in g?)
 
         #Calculate the magnitude of acceleration from all three axes:
         a_mag = math.sqrt(ax**2 + ay**2 + az**2)
 
         #Double integrate aA to get approximate distance b/w wave trough and crest
-        aA = a_mag - g     #aA is the approximated vertical acceleration
+        aA = a_mag - g_const     #aA is the approximated vertical acceleration
 
         acc_list.append(aA)
 
@@ -118,8 +118,9 @@ else:
   min_wi = 0  #index of local min wavepoint
 
   wave_pi = 0 #time of wave period
+  avg_wave_pi = 0
 
-  threshold = 20 #not sure yet what to initalize threshold to
+  threshold = 50 #not sure yet what to initalize threshold to
 
   end = len(acc_list)
 
@@ -164,7 +165,8 @@ else:
 
           numWaves = numWaves + 1
           waveHeight = d_new
-          waveFreq = 1/wave_pi 
+          #waveFreq = 1/wave_pi 
+          avg_wave_pi = avg_wave_pi + 2*wave_pi
           print "The wave height is %f and the wave frequency is %f." \
             % (waveHeight, waveFreq)
           avg_WH = avg_WH + waveHeight
@@ -198,13 +200,21 @@ else:
     i = i + 1   #Increment i for while(i < end) loop
 
   #At the end of the .CSV data file, return results:
-  avg_WH = avg_WH/numWaves
-  avg_WF = avg_WF/numWaves
+  avg_WH_raw = avg_WH/numWaves
+  avg_WH_m = avg_WH_raw/g_const
+  avg_wave_pi = avg_wave_pi/numWaves
+  avg_WF = 1/avg_wave_pi
+  print avg_wave_pi
+
+  total_time_secs = sum(time_list)
+  total_time_mins= total_time_secs/60 
 
   print "\n" 
   print "Algorithm Successful."
   print "Using a threshold of %d:" % threshold 
   print "The total number of waves for this session was: %d." % numWaves
-  print "Calculated Average Wave Height as: %f (units?)." % avg_WH 
+  print "The total time for this session was: %f secs (or %f mins)." \
+    %(total_time_secs, total_time_mins)
+  print "Calculated Average Wave Height as: %f m." % avg_WH_m 
   print "Calculated Average Wave Frequency as: %f Hz." % avg_WF
 
