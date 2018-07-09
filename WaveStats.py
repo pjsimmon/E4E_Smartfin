@@ -77,7 +77,7 @@ with open(filename_r, 'r') as f:
         ay = int(str_array[3])  #y-axis, affected by gravity (vertical)
         az = int(str_array[4])  #z-axis (horizontal direction 2)
 
-        g_const = 500            #g is the constant for gravity: 500 (measured in g?)
+        g_const = 512            #g is the constant for gravity: 500 (measured in g?)
 
         #Calculate the magnitude of acceleration from all three axes:
         a_mag = math.sqrt(ax**2 + ay**2 + az**2)

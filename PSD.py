@@ -27,7 +27,7 @@ import re
 print('Running WaveStats Algorithm:')
 
 #Reading data from filename_r
-filename_r = "Motion_14637.txt"
+filename_r = "Motion_14644.CSV"
 read_file = open(filename_r, "r")
 
 #File that gets written to:
@@ -75,7 +75,7 @@ with open(filename_r, 'r') as f:
       if (str_array[2] != "N/A" and str_array[3] != "N/A" and \
         str_array[4] != "N/A" and str_array[2] != "IMU A1"):
 
-        g_const = 500     #g_const is scaling constant: 500 (500raw units = 1g)
+        g_const = 512     #g_const is scaling constant: 500 (500raw units = 1g)
         gravity = 9.80665 #gravity is the constant 9.80665m^2/s 
 
         ax = int(str_array[2])  #x-axis (horizontal direction 1)
@@ -116,13 +116,25 @@ print 'Finished computing the acc array.'
 print 'Algorithm Successful.'
 x = acc_array
 
-f, Pxx_den = signal.periodogram(x)
-plt.semilogy(f, Pxx_den)
+##-----Version 1, scaling units wrong (10^3)------
+
+#f, Pxx_den = signal.periodogram(x)
+#plt.semilogy(f, Pxx_den)
+#plt.xlabel('Frequency [Hz]')
+#plt.ylabel('Energy [m^2Hz]')
+#plt.show()
+
+##---------Version 2, wrong axes titles, scaling off by 15------best
+
+dt = 0.01
+#plt.plot(time_array,acc_array)
+plt.psd(x=acc_array)
+plt.title(filename_r)
 plt.xlabel('Frequency [Hz]')
-plt.ylabel('Energy [m^2Hz]')
+plt.ylabel('Energy [m^2/Hz]')
 plt.show()
 
-
+##------Version 3, not working?-----
 
 #trace1 = go.Scatter(x=time_array, y=acc_array)
 #trace2 = go.Scatter(x=f, y=Pxx_den)
