@@ -36,7 +36,7 @@ write_file = open("WaveStatsOut.txt", "w")
 #Initialize lists
 t1 = 0 
 t2 = 0
-time_list = []  #list of times; t_out = current_time - prev_time 
+time_list = []  #list of time offsets; t_out = current_time - prev_time 
 acc_list = []   #list of estimated accelerations
 
 with open(filename_r, 'r') as f: 
@@ -78,12 +78,14 @@ with open(filename_r, 'r') as f:
         az = int(str_array[4])  #z-axis (horizontal direction 2)
 
         g_const = 512            #g is the constant for gravity: 500 (measured in g?)
+        gravity = -9.80665
 
         #Calculate the magnitude of acceleration from all three axes:
         a_mag = math.sqrt(ax**2 + ay**2 + az**2)
 
         #Double integrate aA to get approximate distance b/w wave trough and crest
         aA = a_mag - g_const     #aA is the approximated vertical acceleration
+        ##aA = (aA/g_const)*gravity
 
         acc_list.append(aA)
 
@@ -139,9 +141,11 @@ else:
  
       #Do calculations until a new min is found 
       while (minNotFound and i < (end - 2)):
+        t = time_list[i]
+        #t = t_out
         a_new = acc_list[i] 
-        v_new = (a_new*t_out) + v0
-        d_new = (0.5*a_new*(t_out**2)) + v_new*t_out + d0 
+        v_new = (a_new*t) + v0
+        d_new = (0.5*a_new*(t**2)) + v_new*t + d0 
     
         wave_pi = time_list[i+1] + wave_pi    
  
@@ -159,9 +163,11 @@ else:
           minNotFound = 0  #min point has been found at acc_list[i]
           min_wi = i
 
+          t = time_list[i]
+          #t = t_out
           a_new = acc_list[i] 
           v_new = (a_new*t_out) + v0
-          d_new = (0.5*a_new*(t_out**2)) + v_new*t_out + d0 
+          d_new = (0.5*a_new*(t**2)) + v_new*t + d0 
 
           numWaves = numWaves + 1
           waveHeight = d_new

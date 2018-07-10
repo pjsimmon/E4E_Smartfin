@@ -1,7 +1,7 @@
 #Purisa Jasmine Simmons
 #July 6, 2018
 #An algorithm for generating a Power Spectral Density Plot from 
-#accelerometer data.
+#accelerometer data that has been converted to displacement.
 
 #Overview of Algorithm:
 #1.
@@ -9,6 +9,7 @@
 
 #Data Units:
 #acceleration is measured in g, 500a = 1g = -9.81m/s^2?
+#displacement measured in m
 #time measured in seconds
 
 import numpy as np
@@ -36,8 +37,10 @@ write_file = open("WaveStatsOut.txt", "w")
 #Initialize lists
 t1 = 0 
 t2 = 0
-time_list = []  #list of ***elapsed*** times
-acc_list = []   #list of estimated accelerations
+time_e_list = []  #list of ***elapsed*** times
+time_o_list = []  #list of ***offset*** times
+acc_list = []     #list of estimated accelerations
+disp_list = []    #list of estimated displacements
 
 print 'Extracting data from file...'
 with open(filename_r, 'r') as f: 
@@ -48,7 +51,8 @@ with open(filename_r, 'r') as f:
     if str_array[0] == "UTC":
       t1 = 0
       t2 = 0
-      time_list.append(0)  #initialize time_list with 0
+      time_e_list.append(0)
+      time_o_list.append(0)
 
     else:
       t2 = str_array[0]
@@ -67,10 +71,12 @@ with open(filename_r, 'r') as f:
         if (t_out < 0): 
           t_out = t_out + 1
      
-        last = len(time_list) - 1
-        last_time = time_list[last] 
+        last = len(time_e_list) - 1
+        last_time = time_e_list[last] 
         new_time = t_out + last_time  #new_time is the total elapsed time
-        time_list.append(new_time)
+
+        time_e_list.append(new_time)
+        time_o_list.append(t_out)
 
       if (str_array[2] != "N/A" and str_array[3] != "N/A" and \
         str_array[4] != "N/A" and str_array[2] != "IMU A1"):
@@ -78,26 +84,21 @@ with open(filename_r, 'r') as f:
         g_const = 512     #g_const is scaling constant: 500 (500raw units = 1g)
         gravity = -9.80665 #gravity is the constant 9.80665m^2/s 
 
-        #ax = int(str_array[2])  #x-axis (horizontal direction 1)
-        #ax = (ax/g_const)*gravity
-        #ay = int(str_array[3])  #y-axis, affected by gravity (vertical)
-        #ay = (ay/g_const)*gravity
-        #az = int(str_array[4])  #z-axis (horizontal direction 2)
-        #az = (az/g_const)*gravity
-
-
-        ##Calculate the magnitude of acceleration from all three axes:
-        #a_mag = math.sqrt(ax**2 + ay**2 + az**2)
-
-        ##Double integrate aA to get approximate distance b/w wave trough and crest
-        #aA = a_mag - gravity     #aA is the approximated vertical acceleration
-
-        #acc_list.append(aA)
-
-
+        ax = int(str_array[2])  #x-axis (horizontal direction 1)
+        ax = (ax/g_const)*gravity
         ay = int(str_array[3])  #y-axis, affected by gravity (vertical)
-        ay = (ay/g_const)*gravity - gravity
-        acc_list.append(ay)
+        ay = (ay/g_const)*gravity
+        az = int(str_array[4])  #z-axis (horizontal direction 2)
+        az = (az/g_const)*gravity
+
+
+        #Calculate the magnitude of acceleration from all three axes:
+        a_mag = math.sqrt(ax**2 + ay**2 + az**2)
+
+        #Double integrate aA to get approximate distance b/w wave trough and crest
+        aA = a_mag - gravity     #aA is the approximated vertical acceleration
+
+        acc_list.append(aA)
 
 
     #Reset t1 and t2 after t_out is calculated
@@ -105,8 +106,48 @@ with open(filename_r, 'r') as f:
     t2 = 0
 
 #----------Here, after both lists created----------
+len1 = len(time_e_list)
+len2 = len(time_o_list)
+len3 = len(acc_list)
 
-time_array = np.array(time_list)
+if (len1 != len2 or len1 != len3):
+  print("Error: Lengths of lists do not match!")
+  print len1
+  print len2
+  print len3
+
+else:
+  #Initializations
+  a0 = 0
+  v0 = 0
+  d0 = 0
+  i = 0
+
+  disp_list.append(0)
+
+  #Calculations
+  while (i < len1 - 1):
+    dt = time_o_list[i]
+    a_new = acc_list[i]
+    v_new = a_new*dt + v0
+    d_new = (0.5*a_new*(dt**2)) + v_new*dt + d0
+
+    last_di = len(disp_list) - 1      #index of last element in disp_list
+    last_d = disp_list[last_di]       #last elem from disp_list
+    total_d = d_new + last_d
+    disp_list.append(total_d)
+    i = i + 1
+
+
+len4 = len(disp_list)
+if (len1 != len4):
+  print("Error: Lengths of disp_list doesn't match!")
+  print("Length of disp_list is: %d while len of acc_list is: %d")%(len(disp_list), len(acc_list))
+
+#--------Here, after calculations, ready to graph---------
+
+time_array = np.array(time_e_list)
+disp_array = np.array(disp_list)
 acc_array = np.array(acc_list)
 
 #plt.plot(time_array, acc_array)
@@ -119,7 +160,7 @@ print 'Finished computing the time_offset array.'
 print 'Finished computing the acc array.'
 
 print 'Algorithm Successful.'
-x = acc_array
+x = disp_array 
 
 ##-----Version 1, scaling units wrong (10^3)------
 
@@ -133,7 +174,7 @@ f, Pxx_den = signal.periodogram(x, 100)
 
 dt = 0.01
 #plt.plot(time_array,acc_array)
-plt.psd(x=acc_array)
+plt.psd(x=disp_array)
 plt.title(filename_r)
 plt.xlabel('Frequency [Hz]')
 plt.ylabel('Energy [m^2/Hz]')
@@ -149,5 +190,4 @@ plt.show()
 #fig.append_trace(trace2, 1, 1)
 #fig['layout'].update(height=600, width=600, title='Stacked subplots')
 #plotly.offline.plot(fig, filename='stacked-subplots')
-
 
