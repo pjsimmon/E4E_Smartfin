@@ -27,7 +27,7 @@ import re
 print('Running WaveStats Algorithm:')
 
 #Reading data from filename_r
-filename_r = "Motion_14637.txt"
+filename_r = "Motion_14637.CSV"
 read_file = open(filename_r, "r")
 
 #File that gets written to:
@@ -41,7 +41,7 @@ acc_list = []   #list of estimated accelerations
 
 with open(filename_r, 'r') as f: 
   for line in f:
-    print line     #helps with debugging
+    #print line     #helps with debugging
     str_array = line.split(',')  #separates each line into an array on commas
 
     #-------Calculating Time Offset--------#
@@ -54,7 +54,7 @@ with open(filename_r, 'r') as f:
       t2 = str_array[0]
 
       if (t2 != 0 and t1 != 0 and str_array[2] != "N/A"):
-        time_regex = r"(\.\d+)"
+        time_regex = r"(\.\d+)" #regex to get the part of time that we care about
         t2_val = float(re.search(time_regex, t2).group(1))
         t1_val = float(re.search(time_regex, t1).group(1))
 
@@ -66,26 +66,40 @@ with open(filename_r, 'r') as f:
         #t_out is the time offset between two subsequent samples
         if (t_out < 0): 
           t_out = t_out + 1
-        print t_out
+        #print t_out
       
         time_list.append(t_out)
+        print("Time offset is: %f") % t_out
 
       if (str_array[2] != "N/A" and str_array[3] != "N/A" and \
         str_array[4] != "N/A" and str_array[2] != "IMU A1"):
 
-        ax = int(str_array[2])  #x-axis (horizontal direction 1)
-        ay = int(str_array[3])  #y-axis, affected by gravity (vertical)
-        az = int(str_array[4])  #z-axis (horizontal direction 2)
 
+        #Scale raw to get correct units in m/s^2
         g_const = 512            #g is the constant for gravity: 500 (measured in g?)
         gravity = -9.80665
+
+        ax = float(str_array[2])  #x-axis (horizontal direction 1)
+        ax = (ax/g_const)*gravity
+        ay = float(str_array[3])  #y-axis, affected by gravity (vertical)
+        ay = (ay/g_const)*gravity
+        az = float(str_array[4])  #z-axis (horizontal direction 2)
+        az = (az/g_const)*gravity
+
+        print("ax: %f") % ax 
+        print("ay: %f") % ay
+        print("az: %f") % az 
+
 
         #Calculate the magnitude of acceleration from all three axes:
         a_mag = math.sqrt(ax**2 + ay**2 + az**2)
 
+        print("Acceleration a_mag is: %f") % a_mag
+
         #Double integrate aA to get approximate distance b/w wave trough and crest
-        aA = a_mag - g_const     #aA is the approximated vertical acceleration
-        ##aA = (aA/g_const)*gravity
+        aA = a_mag + gravity #aA is the approximated vertical acceleration
+
+        print("Acceleration aA is: %f") % aA
 
         acc_list.append(aA)
 
@@ -108,39 +122,40 @@ else:
   v0 = 0
   d0 = 0
 
-  i = 2  #start initialization at 2
-  minNotFound = 1
+  i = 2            #start initialization at 2
+  minNotFound = 1  #boolean
   numWaves = 0
   waveHeight = 0
   waveFreq = 0
-  avg_WH = 0
+  total_WH = 0
   avg_WF = 0
 
   max_wi = 0  #index of local max wavepoint
   min_wi = 0  #index of local min wavepoint
 
   wave_pi = 0 #time of wave period
-  avg_wave_pi = 0
+  total_wave_pi = 0
 
-  threshold = 50 #not sure yet what to initalize threshold to
+  #-------Setting the threshold------------
+  threshold = 0.05  #not sure yet what to initalize threshold to
 
   end = len(acc_list)
 
-  while(i < (end - 2)):
-    a_prev2 = acc_list[i-2]
-    a_prev1 = acc_list[i-1]
-    a_this = acc_list[i]
-    a_next1 = acc_list[i+1]
-    a_next2 = acc_list[i+2]
+  while(i < (end - 3)):
+    a_prev2 = float(acc_list[i-2])
+    a_prev1 = float(acc_list[i-1])
+    a_this = float(acc_list[i])
+    a_next1 = float(acc_list[i+1])
+    a_next2 = float(acc_list[i+2])
 
     #Check if a_this is a max point
-    if (a_this > a_prev2 + threshold and a_this > a_prev1 + threshold \
-      and a_this > a_next1 + threshold and a_this > a_next2 + threshold):
+    if (a_prev1 > a_prev2 + threshold and a_this > a_prev1 + threshold \
+      and a_next1 > a_this + threshold and a_next2 > a_this + threshold):
 
       max_wi = i
  
       #Do calculations until a new min is found 
-      while (minNotFound and i < (end - 2)):
+      while (minNotFound and i < (end - 3)):
         t = time_list[i]
         #t = t_out
         a_new = acc_list[i] 
@@ -149,16 +164,18 @@ else:
     
         wave_pi = time_list[i+1] + wave_pi    
  
-        print "Looking for a min" 
-        print a_prev2
-        print a_prev1
-        print a_this
-        print a_next1
-        print a_next2
+        #print "Looking for a min" 
+        #print a_prev2
+        #print a_prev1
+        #print a_this
+        #print a_next1
+        #print a_next2
 
         #Check for next min point
-        if (a_this < a_prev2 - threshold and a_this < a_prev1 - threshold \
-          and a_this < a_next1 - threshold and a_this < a_next2 - threshold):
+        if (a_prev1 <  a_prev2 - threshold and a_this < a_prev1 - threshold \
+          and a_this < a_next1 - threshold and a_next1 < a_next2 - threshold):
+
+          print("Found a new min")
 
           minNotFound = 0  #min point has been found at acc_list[i]
           min_wi = i
@@ -168,15 +185,22 @@ else:
           a_new = acc_list[i] 
           v_new = (a_new*t_out) + v0
           d_new = (0.5*a_new*(t**2)) + v_new*t + d0 
+          wave_pi = time_list[i] + wave_pi    
 
-          numWaves = numWaves + 1
-          waveHeight = d_new
-          #waveFreq = 1/wave_pi 
-          avg_wave_pi = avg_wave_pi + 2*wave_pi
-          print "The wave height is %f and the wave frequency is %f." \
-            % (waveHeight, waveFreq)
-          avg_WH = avg_WH + waveHeight
-          avg_WF = avg_WF + waveFreq
+          #Don't count heights greater than 20m (unreasonable)
+          # or periods greater than 30s
+          if (abs(d_new) < 20 and 2*wave_pi < 30):
+            numWaves = numWaves + 1
+            waveHeight = abs(d_new)
+            total_WH = total_WH + waveHeight
+
+            if (wave_pi != 0):
+              wave_pi = 2*wave_pi
+              waveFreq = 1/(wave_pi) 
+              total_wave_pi = total_wave_pi + 2*wave_pi
+              print "The wave height is %f, wave frequency is %f, period: %f." \
+                % (waveHeight, waveFreq, wave_pi)
+              avg_WF = avg_WF + waveFreq
 
         #Set all parameters for next sample (same wave)
         a0 = a_new
@@ -184,11 +208,11 @@ else:
         d0 = d_new
 
         i = i + 1 #Increment i for while(minNotFound) loop
-        a_prev2 = acc_list[i-2]
-        a_prev1 = acc_list[i-1]
-        a_this = acc_list[i]
-        a_next1 = acc_list[i+1]
-        a_next2 = acc_list[i+2]
+        a_prev2 = float(acc_list[i-2])
+        a_prev1 = float(acc_list[i-1])
+        a_this = float(acc_list[i])
+        a_next1 = float(acc_list[i+1])
+        a_next2 = float(acc_list[i+2])
 
     #Reset after every max point - calculating new wave height and frequency:
     a0 = 0
@@ -206,21 +230,31 @@ else:
     i = i + 1   #Increment i for while(i < end) loop
 
   #At the end of the .CSV data file, return results:
-  avg_WH_raw = avg_WH/numWaves
-  avg_WH_m = avg_WH_raw/g_const
-  avg_wave_pi = avg_wave_pi/numWaves
-  avg_WF = 1/avg_wave_pi
-  print avg_wave_pi
+  if numWaves == 0:
+    print("Error! numWaves = 0")
+  else:
+    avg_WH_m = total_WH/numWaves
+    avg_WP = total_wave_pi/numWaves
+    avg_WF = avg_WF/numWaves
+    print ("avg_WP: %f")%avg_WP
+    print ("avg_WF: %f")%avg_WF
+    print ("1/avg_WP = avg_WF?: %f ?= %f")%(1/avg_WP, avg_WF)
 
-  total_time_secs = sum(time_list)
-  total_time_mins= total_time_secs/60 
+    if (avg_WP == 0):
+      avg_WF = avg_WF
+    else:
+      avg_WF = 1/avg_WP
 
-  print "\n" 
-  print "Algorithm Successful."
-  print "Using a threshold of %d:" % threshold 
-  print "The total number of waves for this session was: %d." % numWaves
-  print "The total time for this session was: %f secs (or %f mins)." \
-    %(total_time_secs, total_time_mins)
-  print "Calculated Average Wave Height as: %f m." % avg_WH_m 
-  print "Calculated Average Wave Frequency as: %f Hz." % avg_WF
+    total_time_secs = sum(time_list)
+    total_time_mins= total_time_secs/60 
+
+    print "\n" 
+    print "Algorithm Successful."
+    print "Using a threshold of %f:" % threshold 
+    print "The total number of waves measured this session was: %d." % numWaves
+    print "The total time for this session was: %f secs (or %f mins)." \
+      %(total_time_secs, total_time_mins)
+    print "Calculated Average Wave Height as: %f m." % avg_WH_m 
+    print "Calculated Average Wave Period as: %f s." % avg_WP 
+    #print "Calculated Average Wave Frequency as: %f Hz." % avg_WF
 

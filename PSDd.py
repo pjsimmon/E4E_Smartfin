@@ -28,7 +28,7 @@ import re
 print('Running WaveStats Algorithm:')
 
 #Reading data from filename_r
-filename_r = "Motion_14644.CSV"
+filename_r = "Motion_14637.CSV"
 read_file = open(filename_r, "r")
 
 #File that gets written to:
@@ -70,6 +70,8 @@ with open(filename_r, 'r') as f:
         #t_out is the time offset between two subsequent samples
         if (t_out < 0): 
           t_out = t_out + 1
+
+        print ("Printing time_offsets")
      
         last = len(time_e_list) - 1
         last_time = time_e_list[last] 
@@ -85,18 +87,19 @@ with open(filename_r, 'r') as f:
         gravity = -9.80665 #gravity is the constant 9.80665m^2/s 
 
         ax = int(str_array[2])  #x-axis (horizontal direction 1)
-        ax = (ax/g_const)*gravity
+        #ax = (ax/g_const)*gravity
         ay = int(str_array[3])  #y-axis, affected by gravity (vertical)
-        ay = (ay/g_const)*gravity
+        #ay = (ay/g_const)*gravity
         az = int(str_array[4])  #z-axis (horizontal direction 2)
-        az = (az/g_const)*gravity
+        #az = (az/g_const)*gravity
 
 
         #Calculate the magnitude of acceleration from all three axes:
         a_mag = math.sqrt(ax**2 + ay**2 + az**2)
 
         #Double integrate aA to get approximate distance b/w wave trough and crest
-        aA = a_mag - gravity     #aA is the approximated vertical acceleration
+        #aA = a_mag - gravity     #aA is the approximated vertical acceleration
+        aA = (a_mag/g_const)*gravity - gravity
 
         acc_list.append(aA)
 
@@ -132,10 +135,15 @@ else:
     v_new = a_new*dt + v0
     d_new = (0.5*a_new*(dt**2)) + v_new*dt + d0
 
+    print(d_new)
+
     last_di = len(disp_list) - 1      #index of last element in disp_list
     last_d = disp_list[last_di]       #last elem from disp_list
     total_d = d_new + last_d
     disp_list.append(total_d)
+
+    print(total_d)
+
     i = i + 1
 
 
@@ -150,8 +158,8 @@ time_array = np.array(time_e_list)
 disp_array = np.array(disp_list)
 acc_array = np.array(acc_list)
 
-#plt.plot(time_array, acc_array)
-#plt.show()
+plt.plot(time_array, disp_array)
+plt.show()
 
 #Need to remove the scaling factor of 500 to get more correct units for 
 #Energy in m^2/Hz.
@@ -172,13 +180,13 @@ f, Pxx_den = signal.periodogram(x, 100)
 
 ##---------Version 2, wrong axes titles, scaling off by 15------best
 
-dt = 0.01
-#plt.plot(time_array,acc_array)
-plt.psd(x=disp_array)
-plt.title(filename_r)
-plt.xlabel('Frequency [Hz]')
-plt.ylabel('Energy [m^2/Hz]')
-plt.show()
+#dt = 0.01
+##plt.plot(time_array,acc_array)
+#plt.psd(x=disp_array)
+#plt.title(filename_r)
+#plt.xlabel('Frequency [Hz]')
+#plt.ylabel('Energy [m^2/Hz]')
+#plt.show()
 
 ##------Version 3, not working?-----
 
