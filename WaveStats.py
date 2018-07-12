@@ -27,7 +27,7 @@ import re
 print('Running WaveStats Algorithm:')
 
 #Reading data from filename_r
-filename_r = "Motion_14637.CSV"
+filename_r = "Motion_14644.CSV"
 read_file = open(filename_r, "r")
 
 #File that gets written to:
@@ -128,7 +128,7 @@ else:
   waveHeight = 0
   waveFreq = 0
   total_WH = 0
-  avg_WF = 0
+  total_WF = 0
 
   max_wi = 0  #index of local max wavepoint
   min_wi = 0  #index of local min wavepoint
@@ -200,7 +200,7 @@ else:
               total_wave_pi = total_wave_pi + 2*wave_pi
               print "The wave height is %f, wave frequency is %f, period: %f." \
                 % (waveHeight, waveFreq, wave_pi)
-              avg_WF = avg_WF + waveFreq
+              total_WF = total_WF + waveFreq
 
         #Set all parameters for next sample (same wave)
         a0 = a_new
@@ -235,15 +235,15 @@ else:
   else:
     avg_WH_m = total_WH/numWaves
     avg_WP = total_wave_pi/numWaves
-    avg_WF = avg_WF/numWaves
-    print ("avg_WP: %f")%avg_WP
-    print ("avg_WF: %f")%avg_WF
-    print ("1/avg_WP = avg_WF?: %f ?= %f")%(1/avg_WP, avg_WF)
+    avg_WF = total_WF/numWaves
+    #print ("avg_WP: %f")%avg_WP
+    #print ("avg_WF: %f")%avg_WF
+    #print ("1/avg_WP = avg_WF?: %f ?= %f")%(1/avg_WP, avg_WF)
 
-    if (avg_WP == 0):
-      avg_WF = avg_WF
-    else:
-      avg_WF = 1/avg_WP
+    #if (avg_WP == 0):
+    #  avg_WF = avg_WF
+    #else:
+    #  avg_WF = 1/avg_WP
 
     total_time_secs = sum(time_list)
     total_time_mins= total_time_secs/60 
@@ -256,5 +256,6 @@ else:
       %(total_time_secs, total_time_mins)
     print "Calculated Average Wave Height as: %f m." % avg_WH_m 
     print "Calculated Average Wave Period as: %f s." % avg_WP 
+    print "Calculated Average Wave Frequency as: %f Hz." % (1/avg_WP) 
     #print "Calculated Average Wave Frequency as: %f Hz." % avg_WF
 

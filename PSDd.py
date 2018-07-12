@@ -101,6 +101,9 @@ with open(filename_r, 'r') as f:
         #aA = a_mag - gravity     #aA is the approximated vertical acceleration
         aA = (a_mag/g_const)*gravity - gravity
 
+    
+        print aA
+
         acc_list.append(aA)
 
 
@@ -130,10 +133,10 @@ else:
 
   #Calculations
   while (i < len1 - 1):
-    dt = time_o_list[i]
+    t = time_o_list[i]
     a_new = acc_list[i]
-    v_new = a_new*dt + v0
-    d_new = (0.5*a_new*(dt**2)) + v_new*dt + d0
+    v_new = a_new*t + v0
+    d_new = (0.5*a_new*(t**2)) + v_new*t + d0
 
     print(d_new)
 
@@ -158,8 +161,8 @@ time_array = np.array(time_e_list)
 disp_array = np.array(disp_list)
 acc_array = np.array(acc_list)
 
-plt.plot(time_array, disp_array)
-plt.show()
+#plt.plot(time_array, disp_array)
+#plt.show()
 
 #Need to remove the scaling factor of 500 to get more correct units for 
 #Energy in m^2/Hz.
@@ -180,13 +183,13 @@ f, Pxx_den = signal.periodogram(x, 100)
 
 ##---------Version 2, wrong axes titles, scaling off by 15------best
 
-#dt = 0.01
-##plt.plot(time_array,acc_array)
-#plt.psd(x=disp_array)
-#plt.title(filename_r)
-#plt.xlabel('Frequency [Hz]')
-#plt.ylabel('Energy [m^2/Hz]')
-#plt.show()
+dt = 0.01
+#plt.plot(time_array,acc_array)
+plt.psd(x=disp_array)
+plt.title(filename_r)
+plt.xlabel('Frequency [Hz]')
+plt.ylabel('Energy [m^2/Hz]')
+plt.show()
 
 ##------Version 3, not working?-----
 
