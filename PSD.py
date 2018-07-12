@@ -4,11 +4,10 @@
 #accelerometer data.
 
 #Overview of Algorithm:
-#1.
-#Returns the Power Spectral Density Plot
+#1. Returns the Power Spectral Density Plot
 
 #Data Units:
-#acceleration is measured in g, 500a = 1g = -9.81m/s^2?
+#acceleration is measured in g, 500a = 1g = -9.81m/s^2
 #time measured in seconds
 
 import numpy as np

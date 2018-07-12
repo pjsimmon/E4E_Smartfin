@@ -14,9 +14,9 @@
 
 
 #Data Units:
-#acceleration is measured in g, 500a = 1g = -9.81m/s^2?
-#velocity measured in m/s?
-#distance measured in m?
+#acceleration is measured in g, 500a = 1g = -9.81m/s^2
+#velocity measured in m/s
+#distance measured in m
 #time measured in seconds
 
 import math
