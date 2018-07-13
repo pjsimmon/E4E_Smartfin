@@ -17,7 +17,8 @@ read_file = open(filename_r, "r")
 #Initialize lists
 t1 = 0 
 t2 = 0
-time_list = []  #list of time offsets; t_out = current_time - prev_time 
+time_o_list = []  #list of time offsets; t_out = current_time - prev_time 
+time_e_list = []
 imu1_list = []
 imu2_list = []   #list of estimated accelerations
 imu3_list = []
@@ -31,7 +32,8 @@ with open(filename_r, 'r') as f:
     if str_array[1] == "Time":
       t1 = 0
       t2 = 0
-      time_list.append(0)  #initialize time_list with 0
+      time_o_list.append(0)  #initialize time_list with 0
+      time_e_list.append(0)
 
     else:
       t2 = str_array[1]    #Using "Time" Column instead of "UTC" column
@@ -39,7 +41,12 @@ with open(filename_r, 'r') as f:
       if (t2 != 0 and t1 != 0 and str_array[2] != "N/A"):
         t_out = float(t2) - float(t1) #measured in secs
         t_out = (t_out*(10**-3))
-        time_list.append(t_out)
+
+        last_ti = len(time_o_list) - 1 #index of last time_offset
+        last_te = time_e_list[last_ti] #last time_elapsed
+        time_e_list.append(last_te + t_out)  #last time_elapsed + time_offset
+        time_o_list.append(t_out)
+      
         print(("Time offset is: %f") % (t_out))
 
         
@@ -74,7 +81,7 @@ with open(filename_r, 'r') as f:
 #Now, calculate wave heights between peaks and valleys.
 
 
-if len(time_list) != len(imu2_list):
+if len(time_o_list) != len(imu2_list):
     print("Error! Lengths of time_list and vert_list don't match!")
     print("Length of time_list: %d" % time_list)
     print("Length of imu2_list: %d" % imu2_list)
@@ -126,12 +133,12 @@ else:
             while (minNotFound and i < (end - 3) and imu2_list[i] > v_min \
                    and imu2_list[i] < v_max):
                 #print ("While min not found loop")
-                t = time_list[i]
+                t = time_o_list[i]
                 a_new = float(float(float(imu2_list[i]/g_const)*gravity)-gravity)
                 v_new = (a_new*t) + v0
                 d_new = (0.5*a_new*(t**2)) + v_new*t + d0 
     
-                wave_pi = time_list[i+1] + wave_pi 
+                wave_pi = time_o_list[i+1] + wave_pi 
             
                 #Check for next min point
                 if (a_this < a_prev1 - threshold and a_this < a_next1 - threshold \
@@ -141,12 +148,12 @@ else:
                     minNotFound = 0
                     min_wi = i
                 
-                    t = time_list[i]
+                    t = time_o_list[i]
                     a_new = float(float(float(imu2_list[i]/g_const)*gravity)-gravity)
                     print("a_new is: %f"%a_new)
                     v_new = float((a_new*t) + v0)
                     d_new = float((0.5*a_new*(t**2)) + v_new*t + d0) 
-                    wave_pi = float(time_list[i] + wave_pi)
+                    wave_pi = float(time_o_list[i] + wave_pi)
                 
                     #Don't count heights greater than 20m, unreasonable.
                     if (abs(d_new) < 20):
@@ -198,7 +205,8 @@ else:
     avg_WP = total_WP/numWaves
     #avg_WF = total_WF/numWaves
                     
-    total_time_secs = sum(time_list)
+    last_time_e = len(time_e_list) - 1
+    total_time_secs = time_e_list[last_time_e]
     total_time_mins= total_time_secs/60 
 
     print("\n") 
