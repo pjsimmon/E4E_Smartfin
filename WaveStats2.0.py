@@ -221,4 +221,3 @@ else:
       print("Calculated Average Wave Frequency as: %f Hz." % (1/avg_WP)) 
     #print "Calculated Average Wave Frequency as: %f Hz." % avg_WF
 
-
